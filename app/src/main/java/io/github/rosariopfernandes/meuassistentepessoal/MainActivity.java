@@ -1,5 +1,7 @@
 package io.github.rosariopfernandes.meuassistentepessoal;
 
+import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -60,10 +62,17 @@ public class MainActivity extends AppCompatActivity implements AIListener{
             }
         }
 
-        // Show results in TextView.
-        textView.setText("Query:" + result.getResolvedQuery() + //A frase que o utilizador usou
-                "\nSpeech: " + result.getFulfillment().getSpeech() + //A resposta
-                "\nParameters: " + parameterString); //Os parametros
+        String action = result.getAction();
+        if(action.equalsIgnoreCase("calendar.read"))
+        {
+            textView.setText(lerEventos());
+        }
+        else {
+            // Show results in TextView.
+            textView.setText("Query:" + result.getResolvedQuery() + //A frase que o utilizador usou
+                    "\nSpeech: " + result.getFulfillment().getSpeech() + //A resposta
+                    "\nParameters: " + parameterString); //Os parametros
+        }
     }
 
     @Override
@@ -87,5 +96,21 @@ public class MainActivity extends AppCompatActivity implements AIListener{
     @Override
     public void onListeningFinished() {
         textView.setText("Carregando...");
+    }
+
+    private String lerEventos() {
+        String events = "";//Criar a String que receberá os eventos
+        Cursor cursor = getContentResolver()
+                .query(
+                        Uri.parse("content://com.android.calendar/events"), //Calendar Content provider
+                        new String[]{"calendar_id", "title", "description", //Os campos a obter (apesar de estarmos a usar apenas o title,
+                                "dtstart", "dtend", "eventLocation"}, null,// coloquei aqui outros campos possíveis)
+                        null, null);
+        cursor.moveToFirst();
+        for (int i = 0; i < cursor.getCount(); i++) {
+            events+=cursor.getString(1)+", ";
+            cursor.moveToNext();
+        }
+        return events;
     }
 }
